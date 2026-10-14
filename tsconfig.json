@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    /* Estructura de archivos */
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* Entorno Node.js y módulos ESM */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["node"],
+
+    /* Tipado estricto y comprobaciones */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "skipLibCheck": true,
+
+    /* Salidas de compilación y mapas */
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    /* Configuración de módulos modernos */
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
