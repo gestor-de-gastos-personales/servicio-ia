@@ -1,32 +1,28 @@
+import 'dotenv/config';
 import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import dotenv from 'dotenv';
+import multipart from '@fastify/multipart';
+import { aiRoutes } from './routes/ai.routes';
 
-dotenv.config();
+const fastify = Fastify({ logger: true });
 
-const fastify = Fastify({
-  logger: true,
+fastify.register(multipart, {
+  limits: {
+    fileSize: 10 * 1024 * 1024, // Límite de 10 MB por imagen
+  },
 });
 
-const PORT = Number(process.env.PORT) || 8000;
-const HOST = process.env.HOST || '0.0.0.0';
+fastify.register(aiRoutes);
 
-async function main() {
-  await fastify.register(cors, {
-    origin: true,
-  });
-
-  fastify.get('/health', async () => {
-    return { status: 'ok', service: 'servicio-ia' };
-  });
-
+const start = async () => {
   try {
-    await fastify.listen({ port: PORT, host: HOST });
-    console.log(`Servidor de IA corriendo en http://${HOST}:${PORT}`);
+    const port = Number(process.env.PORT) || 8000;
+    const host = process.env.HOST || '0.0.0.0';
+    await fastify.listen({ port, host });
+    console.log(`🚀 Servicio IA corriendo en http://${host}:${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
   }
-}
+};
 
-main();
+start();
