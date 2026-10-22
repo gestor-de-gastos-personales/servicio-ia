@@ -5,32 +5,52 @@ import 'dotenv/config';
  * para respetar el orden de carga de dotenv.
  */
 function getApiGastosUrl(): string {
-  return (process.env.API_GASTOS_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
+  return (process.env.API_GASTOS_URL || 'http://127.0.0.1:3000').replace(
+    /\/+$/,
+    '',
+  );
+}
+
+export interface GastoCreado {
+  id: number;
+  descripcion: string;
+  monto: number;
+}
+
+export interface ResumenGastos {
+  totalGeneral: number;
+  porCategoria: Array<{
+    categoriaNombre: string;
+    total: number;
+    porcentaje: number;
+  }>;
+}
+
+async function pedir<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, init);
+
+  if (!response.ok) {
+    throw new Error(`api-gastos respondió ${response.status} en ${url}`);
+  }
+
+  return (await response.json()) as T;
 }
 
 export class GastosApiService {
-  /**
-   * Persiste un gasto (endpoint protegido por JWT).
-   */
-  static async createExpense(payload: unknown) {
-    const response = await fetch(`${getApiGastosUrl()}/gastos`, {
+  /** Persiste un gasto (endpoint protegido por JWT). */
+  static async createExpense(payload: unknown): Promise<GastoCreado> {
+    return pedir<GastoCreado>(`${getApiGastosUrl()}/gastos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!response.ok) throw new Error(`Status ${response.status}`);
-    return await response.json();
   }
 
-  /**
-   * Obtiene el resumen de gastos de un usuario de Telegram.
-   */
-  static async getSummary(telegramId: string) {
-    const response = await fetch(
+  /** Obtiene el resumen de gastos de un usuario de Telegram. */
+  static async getSummary(telegramId: string): Promise<ResumenGastos> {
+    return pedir<ResumenGastos>(
       `${getApiGastosUrl()}/gastos/resumen/bot?telegramId=${encodeURIComponent(telegramId)}`,
     );
-    if (!response.ok) throw new Error(`Status ${response.status}`);
-    return await response.json();
   }
 
   /**
@@ -39,14 +59,16 @@ export class GastosApiService {
    */
   static async getCategories(): Promise<string[]> {
     try {
-      const response = await fetch(`${getApiGastosUrl()}/categorias`);
-      if (!response.ok) return [];
+      const data: unknown = await pedir<unknown>(
+        `${getApiGastosUrl()}/categorias`,
+      );
 
-      const data: unknown = await response.json();
-      if (!Array.isArray(data)) return [];
+      if (!Array.isArray(data)) {
+        return [];
+      }
 
       return data
-        .map((cat) => (cat as { nombre?: string }).nombre)
+        .map((categoria) => (categoria as { nombre?: string }).nombre)
         .filter((nombre): nombre is string => typeof nombre === 'string');
     } catch {
       return [];
