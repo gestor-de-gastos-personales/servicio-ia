@@ -32,6 +32,8 @@ function respuestaGasto(resultado: RespuestaIA, intentPorDefecto: string) {
     comercio: resultado.data.merchant,
     categoria: resultado.data.category,
     descripcion: resultado.data.description,
+    fecha: resultado.data.date,
+    rango: resultado.data.range,
   };
 }
 
