@@ -49,6 +49,13 @@ const REGLAS_COMERCIOS = `NORMALIZACIÓN DE COMERCIOS:
 - Ejemplos: "mac" o "mcdonalds" -> "McDonald's"; "coto" -> "Coto"; "meli" -> "Mercado Libre"; "ypf" -> "YPF".
 - Si no reconocés la marca, conservá el nombre tal como lo escribió el usuario.`;
 
+const REGLAS_COHERENCIA_COMERCIO_CATEGORIA = `COHERENCIA ENTRE COMERCIO Y CATEGORÍA:
+- Si se indica, corrige o deduce el comercio (merchant), DEBES inferir la categoría más adecuada de la lista permitida para ese tipo de comercio.
+- Si el usuario corrige el comercio con frases como "no era en X sino en Y", "era en X, ahora es Y" o "el comercio es Y", ACTUALIZÁ también la categoría para que sea coherente con el NUEVO comercio.
+- Guía práctica: supermercados/hipermercados -> Alimentación; estaciones de servicio/nafta -> Transporte; farmacias -> Salud; gimnasios/clases -> la categoría más lógica de la lista (priorizando coherencia); restaurantes/fast food -> Alimentación; transporte/taxis -> Transporte.
+- Si el usuario especificó EXPLÍCITAMENTE una categoría distinta y es VÁLIDA para la lista, respetala ÚNICAMENTE si es coherente con el nuevo comercio. Si resulta ilógica, priorizá la coherencia con el comercio corregido.
+- Nunca inventes categorías fuera de la lista permitida.`;
+
 function reglasFecha(fechaActual: string): string {
   return `CONTEXTO TEMPORAL:
 - La fecha y hora actual es ${fechaActual}.
@@ -87,5 +94,6 @@ export function construirPromptSistema({
     REGLAS_INTENCIONES,
     reglasCategorias(listaCategorias),
     REGLAS_COMERCIOS,
+    REGLAS_COHERENCIA_COMERCIO_CATEGORIA,
   ].join('\n\n');
 }
