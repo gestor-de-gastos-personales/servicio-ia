@@ -6,6 +6,8 @@
 export interface OpcionesPrompt {
   vision: boolean;
   categorias: string[];
+  /** Fecha y hora actual en ISO 8601 para interpretar expresiones relativas. */
+  fechaActual?: string;
 }
 
 const CATEGORIAS_POR_DEFECTO = [
@@ -25,35 +27,65 @@ const INSTRUCCION_VISION =
   'Eres un sistema de OCR y visión por computadora especializado en extraer datos de tickets y recibos.';
 
 const ESTRUCTURA_RESPUESTA = `{
-  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "DELETE_EXPENSE" | "UNKNOWN",
+  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "CREATE_CATEGORY" | "UNKNOWN",
   "data": {
     "total": number | null,
     "merchant": string | null,
     "category": string | null,
-    "description": string | null
+    "description": string | null,
+    "date": "YYYY-MM-DD" | null,
+    "range": "WEEK" | "15_DAYS" | "MONTH" | "2_MONTHS" | "YEAR" | null
   }
 }`;
 
+const REGLAS_INTENCIONES = `REGLAS PARA "intent":
+- CREATE_EXPENSE: el usuario registra un gasto.
+- GET_SUMMARY: el usuario pide un resumen o total de gastos.
+- CREATE_CATEGORY: el usuario pide crear una categoría nueva.
+- UNKNOWN: no se puede determinar la intención.`;
+
+const REGLAS_COMERCIOS = `NORMALIZACIÓN DE COMERCIOS:
+- Escribí siempre el nombre formal de la marca cuando puedas identificarla.
+- Ejemplos: "mac" o "mcdonalds" -> "McDonald's"; "coto" -> "Coto"; "meli" -> "Mercado Libre"; "ypf" -> "YPF".
+- Si no reconocés la marca, conservá el nombre tal como lo escribió el usuario.`;
+
+function reglasFecha(fechaActual: string): string {
+  return `CONTEXTO TEMPORAL:
+- La fecha y hora actual es ${fechaActual}.
+- Convertí expresiones relativas ("hoy", "ayer", "hace 3 días", "el lunes pasado") a una fecha "YYYY-MM-DD" usando ese contexto.
+- En CREATE_EXPENSE, devolvé la fecha detectada en "date". Si no se menciona una fecha, devolvé null para que se use la fecha actual.
+- En GET_SUMMARY usá "range": WEEK (semana actual), 15_DAYS (últimos 15 días), MONTH (mes actual), 2_MONTHS (últimos 2 meses) o YEAR (año actual). Si no se pide un rango, devolvé null.
+- Los campos "date" y "range" que no correspondan a la intención deben ser null.`;
+}
+
+function reglasCategorias(listaCategorias: string): string {
+  return `REGLAS ESTRICTAS PARA "category":
+- DEBES seleccionar obligatoriamente una opción de esta lista de categorías permitidas: [${listaCategorias}].
+- Si el gasto no encaja perfectamente en ninguna, asigna "Varios" (o la categoría más cercana de la lista).
+- Si no puedes identificar la categoría, devuelve null.
+- Para CREATE_CATEGORY, usá "category" con el nombre de la categoría solicitada.`;
+}
+
 /**
- * Arma el prompt con las categorías reales de api-gastos.
+ * Arma el prompt con la fecha actual y las categorías reales de api-gastos.
  * Si la API no devuelve categorías, usa una lista de respaldo.
  */
 export function construirPromptSistema({
   vision,
   categorias,
+  fechaActual = new Date().toISOString(),
 }: OpcionesPrompt): string {
   const listaCategorias =
     categorias.length > 0 ? categorias.join(', ') : CATEGORIAS_POR_DEFECTO;
   const instruccion = vision ? INSTRUCCION_VISION : INSTRUCCION_TEXTO;
 
-  return `${instruccion}
-Responde ÚNICAMENTE en formato JSON estricto sin bloques Markdown.
-
-Estructura requerida:
-${ESTRUCTURA_RESPUESTA}
-
-REGLAS ESTRICTAS PARA "category":
-- DEBES seleccionar obligatoriamente una opción de esta lista de categorías permitidas: [${listaCategorias}].
-- Si el gasto no encaja perfectamente en ninguna, asigna "Varios" (o la categoría más cercana de la lista).
-- Si no puedes identificar la categoría, devuelve null.`;
+  return [
+    instruccion,
+    'Responde ÚNICAMENTE en formato JSON estricto sin bloques Markdown.',
+    `Estructura requerida:\n${ESTRUCTURA_RESPUESTA}`,
+    reglasFecha(fechaActual),
+    REGLAS_INTENCIONES,
+    reglasCategorias(listaCategorias),
+    REGLAS_COMERCIOS,
+  ].join('\n\n');
 }
