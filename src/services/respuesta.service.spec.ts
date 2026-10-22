@@ -20,8 +20,41 @@ describe('parsearRespuesta', () => {
         merchant: 'Coto',
         category: 'Alimentación',
         description: 'Compra semanal',
+        date: null,
+        range: null,
       },
     });
+  });
+
+  it('normaliza la fecha y el rango solicitados', () => {
+    const contenido = JSON.stringify({
+      intent: 'GET_SUMMARY',
+      data: { date: '2026-10-20', range: '15_DAYS' },
+    });
+
+    expect(parsearRespuesta(contenido)).toEqual({
+      intent: 'GET_SUMMARY',
+      data: {
+        total: null,
+        merchant: null,
+        category: null,
+        description: null,
+        date: '2026-10-20',
+        range: '15_DAYS',
+      },
+    });
+  });
+
+  it('descarta fechas y rangos inválidos', () => {
+    const contenido = JSON.stringify({
+      intent: 'CREATE_EXPENSE',
+      data: { date: '20/10/2026', range: 'SEMANA' },
+    });
+
+    const resultado = parsearRespuesta(contenido);
+
+    expect(resultado.data.date).toBeNull();
+    expect(resultado.data.range).toBeNull();
   });
 
   it('devuelve UNKNOWN y nulos ante JSON inválido', () => {
@@ -32,6 +65,8 @@ describe('parsearRespuesta', () => {
         merchant: null,
         category: null,
         description: null,
+        date: null,
+        range: null,
       },
     });
   });
@@ -60,6 +95,8 @@ describe('parsearRespuesta', () => {
         merchant: null,
         category: null,
         description: null,
+        date: null,
+        range: null,
       },
     });
   });

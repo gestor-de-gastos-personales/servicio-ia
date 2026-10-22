@@ -53,6 +53,7 @@ describe('ai.service', () => {
           merchant: 'Coto',
           category: 'Alimentación',
           description: 'Compra semanal',
+          date: '2026-10-20',
         },
       }),
     );
@@ -66,6 +67,8 @@ describe('ai.service', () => {
         merchant: 'Coto',
         category: 'Alimentación',
         description: 'Compra semanal',
+        date: '2026-10-20',
+        range: null,
       },
     });
     expect(mocks.crearChat).toHaveBeenCalledWith(
@@ -76,6 +79,10 @@ describe('ai.service', () => {
           expect.objectContaining({
             role: 'system',
             content: expect.stringContaining('[Alimentación, Transporte]'),
+          }),
+          expect.objectContaining({
+            role: 'system',
+            content: expect.stringContaining('CONTEXTO TEMPORAL'),
           }),
           { role: 'user', content: 'Gasté 1500 en el Coto' },
         ]),
