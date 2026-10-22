@@ -13,7 +13,7 @@
     "url": "git+https://github.com/gestor-de-gastos-personales/servicio-ia.git"
   },
   "keywords": [],
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/gestor-de-gastos-personales/servicio-ia/issues"
   },

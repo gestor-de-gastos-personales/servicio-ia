@@ -1,30 +1,78 @@
 import OpenAI from 'openai';
 import { Ollama } from 'ollama';
+import { GastosApiService } from './gastos-api.service.js';
 
-function getOpenAIClient() {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('Falta OPENROUTER_API_KEY en las variables de entorno.');
+// Instancias de SDKs
+let openrouterClient: OpenAI | null = null;
+let ollamaClient: Ollama | null = null;
+
+export interface RespuestaIA {
+  intent: string;
+  data: {
+    total: number | null;
+    merchant: string | null;
+    category: string | null;
+    description: string | null;
+  };
+}
+
+function getOpenAIClient(): OpenAI {
+  if (!openrouterClient) {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error('Falta OPENROUTER_API_KEY');
+    openrouterClient = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey,
+    });
+  }
+  return openrouterClient;
+}
+
+function getOllamaClient(): Ollama {
+  if (!ollamaClient) {
+    ollamaClient = new Ollama({ host: process.env.OLLAMA_HOST || 'http://localhost:11434' });
+  }
+  return ollamaClient;
+}
+
+/**
+ * Convierte el contenido devuelto por el modelo en la estructura normalizada.
+ */
+function parsearRespuesta(contenido: string | null | undefined): RespuestaIA {
+  let payload: any = {};
+
+  try {
+    payload = JSON.parse(contenido || '{}');
+  } catch {
+    payload = {};
   }
 
-  return new OpenAI({
-    baseURL: 'https://openrouter.ai/api/v1',
-    apiKey,
-    defaultHeaders: {
-      'HTTP-Referer': 'http://localhost:8000',
-      'X-Title': 'Mangos Expense AI',
+  const data = payload?.data ?? {};
+
+  return {
+    intent: typeof payload?.intent === 'string' ? payload.intent : 'UNKNOWN',
+    data: {
+      total: data.total === null || data.total === undefined ? null : Number(data.total),
+      merchant: typeof data.merchant === 'string' ? data.merchant : null,
+      category: typeof data.category === 'string' ? data.category : null,
+      description: typeof data.description === 'string' ? data.description : null,
     },
-  });
+  };
 }
 
-function getOllamaClient() {
-  return new Ollama({
-    host: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434',
-  });
-}
+// Helper para construir el Prompt del sistema con las categorías reales de api-gastos
+async function getSystemPrompt(isVision: boolean = false) {
+  const categories = await GastosApiService.getCategories();
+  const categoryList = categories.length > 0
+    ? categories.join(', ')
+    : 'Alimentación, Transporte, Servicios, Hogar, Salud, Entretenimiento, Varios';
 
-const SYSTEM_PROMPT_NLU = `
-Eres un asistente financiero inteligente. Analiza el mensaje del usuario y responde ÚNICAMENTE en formato JSON válido sin bloques Markdown.
+  const baseInstruction = isVision
+    ? 'Eres un sistema de OCR y visión por computadora especializado en extraer datos de tickets y recibos.'
+    : 'Eres un asistente financiero especializado en estructurar gastos e intenciones.';
+
+  return `${baseInstruction}
+Responde ÚNICAMENTE en formato JSON estricto sin bloques Markdown (\`\`\`json).
 
 Estructura requerida:
 {
@@ -37,92 +85,82 @@ Estructura requerida:
   }
 }
 
-Reglas:
-1. "CREATE_EXPENSE": Si menciona haber gastado dinero o realizado una compra.
-2. "GET_SUMMARY": Si pide ver su saldo, resumen o total de gastos.
-3. "DELETE_EXPENSE": Si indica eliminar o borrar un gasto.
-4. "UNKNOWN": Cualquier otra interacción.
-`;
+REGLAS EStrictas PARA "category":
+- DEBES seleccionar obligatoriamente una opción de esta lista de categorías permitidas: [${categoryList}].
+- Si el gasto no encaja perfectamente en ninguna, asigna "Varios" (o la categoría más cercana de la lista).
+- Si no puedes identificar la categoría, devuelve null.`;
+}
 
-export async function parseNaturalLanguageText(message: string) {
+// 1. Parseo de mensajes de texto
+export async function parseNaturalLanguageText(message: string): Promise<RespuestaIA> {
   const provider = process.env.AI_PROVIDER || 'openrouter';
+  const systemPrompt = await getSystemPrompt(false);
 
   if (provider === 'openrouter') {
-    const openrouter = getOpenAIClient();
-    const response = await openrouter.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
       response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT_NLU },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
       ],
     });
-
-    return JSON.parse(response.choices[0].message.content || '{}');
+    return parsearRespuesta(response.choices[0]?.message?.content);
   } else {
-    const ollama = getOllamaClient();
-    const response = await ollama.chat({
+    const client = getOllamaClient();
+    const response = await client.chat({
       model: process.env.OLLAMA_MODEL || 'llama3.2-vision',
       format: 'json',
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT_NLU },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
       ],
     });
-
-    return JSON.parse(response.message.content);
+    return parsearRespuesta(response.message.content);
   }
 }
 
-export async function processTicketImage(imageBase64: string) {
+// 2. Procesamiento de comprobantes / fotos
+export async function processReceiptImage(imageBuffer: Buffer): Promise<RespuestaIA> {
   const provider = process.env.AI_PROVIDER || 'openrouter';
-  const promptText = `Analiza la imagen de este ticket de compra. Extrae la información relevante y responde ÚNICAMENTE en formato JSON válido sin Markdown con la estructura:
-  {
-    "intent": "CREATE_EXPENSE",
-    "data": {
-      "total": number,
-      "merchant": string,
-      "category": string,
-      "description": string
-    }
-  }`;
+  const systemPrompt = await getSystemPrompt(true);
 
   if (provider === 'openrouter') {
-    const openrouter = getOpenAIClient();
-    const visionModel = process.env.OPENROUTER_VISION_MODEL || 'google/gemini-flash-1.5';
-
-    const response = await openrouter.chat.completions.create({
-      model: visionModel,
+    const client = getOpenAIClient();
+    const base64Image = imageBuffer.toString('base64');
+    const response = await client.chat.completions.create({
+      model: process.env.OPENROUTER_VISION_MODEL || 'openai/gpt-4o-mini',
       response_format: { type: 'json_object' },
       messages: [
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
           content: [
-            { type: 'text', text: promptText },
+            { type: 'text', text: 'Extrae la información de este ticket de compra.' },
             {
               type: 'image_url',
-              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+              image_url: { url: `data:image/jpeg;base64,${base64Image}` },
             },
           ],
         },
       ],
     });
-
-    return JSON.parse(response.choices[0].message.content || '{}');
+    return parsearRespuesta(response.choices[0]?.message?.content);
   } else {
-    const ollama = getOllamaClient();
-    const response = await ollama.chat({
+    const client = getOllamaClient();
+    const response = await client.chat({
       model: process.env.OLLAMA_MODEL || 'llama3.2-vision',
       format: 'json',
       messages: [
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: promptText,
-          images: [imageBase64],
+          content: 'Extrae la información de este ticket de compra.',
+          images: [imageBuffer.toString('base64')],
         },
       ],
     });
-
-    return JSON.parse(response.message.content);
+    return parsearRespuesta(response.message.content);
   }
 }

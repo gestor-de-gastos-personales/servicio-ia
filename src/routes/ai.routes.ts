@@ -1,57 +1,75 @@
-import { FastifyInstance } from 'fastify';
-import { parseNaturalLanguageText, processTicketImage } from '../services/ai.service';
+import type { FastifyInstance } from 'fastify';
+import { parseNaturalLanguageText, processReceiptImage } from '../services/ai.service.js';
 
 export async function aiRoutes(fastify: FastifyInstance) {
-  // 1. Mensajes de texto
-  fastify.post('/parse-message', async (request, reply) => {
-    const { message, telegramId } = request.body as { message?: string; telegramId?: string };
+  // Endpoint de salud: útil para verificar que el servicio está levantado.
+  fastify.get('/health', async () => ({
+    status: 'ok',
+    servicio: 'servicio-ia',
+    timestamp: new Date().toISOString(),
+  }));
 
-    if (!message) {
-      return reply.status(400).send({ success: false, message: 'El campo "message" es obligatorio.' });
+  // Endpoint para procesar mensajes de texto plano desde Telegram
+  fastify.post('/analizar', async (request, reply) => {
+    const { texto } = request.body as { texto?: string };
+
+    if (!texto || typeof texto !== 'string' || texto.trim() === '') {
+      return reply.status(400).send({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'El campo "texto" es requerido y no puede estar vacío.',
+      });
     }
 
     try {
-      const parsedData = await parseNaturalLanguageText(message);
-      return reply.send({
-        success: true,
-        provider: process.env.AI_PROVIDER || 'openrouter',
-        data: parsedData,
-      });
+      const aiResult = await parseNaturalLanguageText(texto);
+
+      // Desestructuración y aplanado de datos para bot-telegram
+      return {
+        intent: aiResult.intent || 'UNKNOWN',
+        monto: aiResult.data.total,
+        comercio: aiResult.data.merchant,
+        categoria: aiResult.data.category,
+        descripcion: aiResult.data.description,
+      };
     } catch (error: any) {
-      console.error('❌ Error en /parse-message:', error.message);
-      return reply.status(503).send({
-        success: false,
-        message: 'El servicio de IA no se encuentra disponible temporalmente.',
-        error: error.message,
+      fastify.log.error(error);
+      return reply.status(500).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: error.message || 'Error interno al procesar la solicitud con el modelo de IA.',
       });
     }
   });
 
-  // 2. Procesamiento de tickets en imagen
-  fastify.post('/process-ticket', async (request, reply) => {
+  // Endpoint opcional para analizar imágenes de tickets/comprobantes
+  fastify.post('/analizar-imagen', async (request, reply) => {
     try {
       const data = await request.file();
-
       if (!data) {
-        return reply.status(400).send({ success: false, message: 'No se envió ninguna imagen.' });
+        return reply.status(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'Se requiere adjuntar un archivo de imagen.',
+        });
       }
 
       const buffer = await data.toBuffer();
-      const imageBase64 = buffer.toString('base64');
+      const aiResult = await processReceiptImage(buffer);
 
-      const parsedTicket = await processTicketImage(imageBase64);
-
-      return reply.send({
-        success: true,
-        provider: process.env.AI_PROVIDER || 'openrouter',
-        data: parsedTicket,
-      });
+      return {
+        intent: aiResult.intent || 'CREATE_EXPENSE',
+        monto: aiResult.data.total,
+        comercio: aiResult.data.merchant,
+        categoria: aiResult.data.category,
+        descripcion: aiResult.data.description,
+      };
     } catch (error: any) {
-      console.error('❌ Error en /process-ticket:', error.message);
-      return reply.status(503).send({
-        success: false,
-        message: 'No se pudo procesar la imagen del ticket.',
-        error: error.message,
+      fastify.log.error(error);
+      return reply.status(500).send({
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: error.message || 'Error al procesar la imagen del comprobante.',
       });
     }
   });
