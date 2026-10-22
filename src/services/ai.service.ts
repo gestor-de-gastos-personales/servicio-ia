@@ -1,19 +1,26 @@
 import OpenAI from 'openai';
 import { Ollama } from 'ollama';
 import { GastosApiService } from './gastos-api.service.js';
+import { construirPromptSistema } from './prompt.service.js';
+import { parsearRespuesta } from './respuesta.service.js';
+import type { RespuestaIA } from './respuesta.service.js';
 
-// Instancias de SDKs
+type ProveedorIA = 'openrouter' | 'ollama';
+
+interface SolicitudIA {
+  promptSistema: string;
+  mensaje: string;
+  imagen?: Buffer;
+}
+
+const INSTRUCCION_IMAGEN = 'Extrae la información de este ticket de compra.';
+
+// Instancias de SDKs (se crean una sola vez por proceso)
 let openrouterClient: OpenAI | null = null;
 let ollamaClient: Ollama | null = null;
 
-export interface RespuestaIA {
-  intent: string;
-  data: {
-    total: number | null;
-    merchant: string | null;
-    category: string | null;
-    description: string | null;
-  };
+function proveedorActivo(): ProveedorIA {
+  return process.env.AI_PROVIDER === 'ollama' ? 'ollama' : 'openrouter';
 }
 
 function getOpenAIClient(): OpenAI {
@@ -30,137 +37,99 @@ function getOpenAIClient(): OpenAI {
 
 function getOllamaClient(): Ollama {
   if (!ollamaClient) {
-    ollamaClient = new Ollama({ host: process.env.OLLAMA_HOST || 'http://localhost:11434' });
+    ollamaClient = new Ollama({
+      host: process.env.OLLAMA_HOST || 'http://localhost:11434',
+    });
   }
   return ollamaClient;
 }
 
-/**
- * Convierte el contenido devuelto por el modelo en la estructura normalizada.
- */
-function parsearRespuesta(contenido: string | null | undefined): RespuestaIA {
-  let payload: any = {};
-
-  try {
-    payload = JSON.parse(contenido || '{}');
-  } catch {
-    payload = {};
+function contenidoUsuario(solicitud: SolicitudIA) {
+  if (!solicitud.imagen) {
+    return solicitud.mensaje;
   }
 
-  const data = payload?.data ?? {};
-
-  return {
-    intent: typeof payload?.intent === 'string' ? payload.intent : 'UNKNOWN',
-    data: {
-      total: data.total === null || data.total === undefined ? null : Number(data.total),
-      merchant: typeof data.merchant === 'string' ? data.merchant : null,
-      category: typeof data.category === 'string' ? data.category : null,
-      description: typeof data.description === 'string' ? data.description : null,
+  return [
+    { type: 'text' as const, text: solicitud.mensaje },
+    {
+      type: 'image_url' as const,
+      image_url: {
+        url: `data:image/jpeg;base64,${solicitud.imagen.toString('base64')}`,
+      },
     },
-  };
+  ];
 }
 
-// Helper para construir el Prompt del sistema con las categorías reales de api-gastos
-async function getSystemPrompt(isVision: boolean = false) {
-  const categories = await GastosApiService.getCategories();
-  const categoryList = categories.length > 0
-    ? categories.join(', ')
-    : 'Alimentación, Transporte, Servicios, Hogar, Salud, Entretenimiento, Varios';
+async function consultarOpenRouter(
+  solicitud: SolicitudIA,
+): Promise<string | null | undefined> {
+  const esVision = solicitud.imagen !== undefined;
 
-  const baseInstruction = isVision
-    ? 'Eres un sistema de OCR y visión por computadora especializado en extraer datos de tickets y recibos.'
-    : 'Eres un asistente financiero especializado en estructurar gastos e intenciones.';
+  const response = await getOpenAIClient().chat.completions.create({
+    model: esVision
+      ? process.env.OPENROUTER_VISION_MODEL || 'openai/gpt-4o-mini'
+      : process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: solicitud.promptSistema },
+      { role: 'user', content: contenidoUsuario(solicitud) },
+    ],
+  });
 
-  return `${baseInstruction}
-Responde ÚNICAMENTE en formato JSON estricto sin bloques Markdown (\`\`\`json).
-
-Estructura requerida:
-{
-  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "DELETE_EXPENSE" | "UNKNOWN",
-  "data": {
-    "total": number | null,
-    "merchant": string | null,
-    "category": string | null,
-    "description": string | null
-  }
+  return response.choices[0]?.message?.content;
 }
 
-REGLAS EStrictas PARA "category":
-- DEBES seleccionar obligatoriamente una opción de esta lista de categorías permitidas: [${categoryList}].
-- Si el gasto no encaja perfectamente en ninguna, asigna "Varios" (o la categoría más cercana de la lista).
-- Si no puedes identificar la categoría, devuelve null.`;
+async function consultarOllama(
+  solicitud: SolicitudIA,
+): Promise<string | null | undefined> {
+  const response = await getOllamaClient().chat({
+    model: process.env.OLLAMA_MODEL || 'llama3.2-vision',
+    format: 'json',
+    messages: [
+      { role: 'system', content: solicitud.promptSistema },
+      solicitud.imagen
+        ? {
+            role: 'user',
+            content: solicitud.mensaje,
+            images: [solicitud.imagen.toString('base64')],
+          }
+        : { role: 'user', content: solicitud.mensaje },
+    ],
+  });
+
+  return response.message.content;
 }
 
-// 1. Parseo de mensajes de texto
-export async function parseNaturalLanguageText(message: string): Promise<RespuestaIA> {
-  const provider = process.env.AI_PROVIDER || 'openrouter';
-  const systemPrompt = await getSystemPrompt(false);
+async function consultarIA(solicitud: SolicitudIA): Promise<RespuestaIA> {
+  const contenido =
+    proveedorActivo() === 'ollama'
+      ? await consultarOllama(solicitud)
+      : await consultarOpenRouter(solicitud);
 
-  if (provider === 'openrouter') {
-    const client = getOpenAIClient();
-    const response = await client.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
-    });
-    return parsearRespuesta(response.choices[0]?.message?.content);
-  } else {
-    const client = getOllamaClient();
-    const response = await client.chat({
-      model: process.env.OLLAMA_MODEL || 'llama3.2-vision',
-      format: 'json',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
-    });
-    return parsearRespuesta(response.message.content);
-  }
+  return parsearRespuesta(contenido);
 }
 
-// 2. Procesamiento de comprobantes / fotos
-export async function processReceiptImage(imageBuffer: Buffer): Promise<RespuestaIA> {
-  const provider = process.env.AI_PROVIDER || 'openrouter';
-  const systemPrompt = await getSystemPrompt(true);
+async function promptConCategorias(vision: boolean): Promise<string> {
+  const categorias = await GastosApiService.getCategories();
+  return construirPromptSistema({ vision, categorias });
+}
 
-  if (provider === 'openrouter') {
-    const client = getOpenAIClient();
-    const base64Image = imageBuffer.toString('base64');
-    const response = await client.chat.completions.create({
-      model: process.env.OPENROUTER_VISION_MODEL || 'openai/gpt-4o-mini',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Extrae la información de este ticket de compra.' },
-            {
-              type: 'image_url',
-              image_url: { url: `data:image/jpeg;base64,${base64Image}` },
-            },
-          ],
-        },
-      ],
-    });
-    return parsearRespuesta(response.choices[0]?.message?.content);
-  } else {
-    const client = getOllamaClient();
-    const response = await client.chat({
-      model: process.env.OLLAMA_MODEL || 'llama3.2-vision',
-      format: 'json',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: 'Extrae la información de este ticket de compra.',
-          images: [imageBuffer.toString('base64')],
-        },
-      ],
-    });
-    return parsearRespuesta(response.message.content);
-  }
+/** Parsea un mensaje de texto plano ("Gasté 1500 en el Coto"). */
+export async function parseNaturalLanguageText(
+  message: string,
+): Promise<RespuestaIA> {
+  const promptSistema = await promptConCategorias(false);
+  return consultarIA({ promptSistema, mensaje: message });
+}
+
+/** Analiza la imagen de un comprobante y extrae el gasto. */
+export async function processReceiptImage(
+  imageBuffer: Buffer,
+): Promise<RespuestaIA> {
+  const promptSistema = await promptConCategorias(true);
+  return consultarIA({
+    promptSistema,
+    mensaje: INSTRUCCION_IMAGEN,
+    imagen: imageBuffer,
+  });
 }
