@@ -69,6 +69,10 @@ describe('ai.service', () => {
         description: 'Compra semanal',
         date: '2026-10-20',
         range: null,
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
       },
     });
     expect(mocks.crearChat).toHaveBeenCalledWith(

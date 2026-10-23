@@ -19,6 +19,10 @@ export interface RespuestaIA {
     description: string | null;
     date: string | null;
     range: RangoResumen | null;
+    frecuencia?: string | null;
+    dia?: number | null;
+    searchHint?: string | null;
+    campos?: Record<string, unknown> | null;
   };
 }
 
@@ -39,6 +43,10 @@ const RESPUESTA_VACIA: RespuestaIA = {
     description: null,
     date: null,
     range: null,
+    frecuencia: null,
+    dia: null,
+    searchHint: null,
+    campos: null,
   },
 };
 
@@ -57,6 +65,16 @@ function comoNumero(valor: unknown): number | null {
 
   const numero = Number(valor);
   return Number.isFinite(numero) ? numero : null;
+}
+
+function comoObjeto(valor: unknown): Record<string, unknown> | null {
+  return esObjeto(valor) ? valor : null;
+}
+
+function comoEntero(valor: unknown): number | null {
+  const numero = comoNumero(valor);
+  if (numero === null) return null;
+  return Number.isInteger(numero) ? numero : null;
 }
 
 /** Acepta únicamente fechas ISO de calendario (YYYY-MM-DD). */
@@ -102,6 +120,10 @@ export function parsearRespuesta(contenido: string | null | undefined): Respuest
       description: comoTexto(data.description),
       date: comoFecha(data.date),
       range: comoRango(data.range),
+      frecuencia: comoTexto(data.frecuencia),
+      dia: comoEntero(data.dia),
+      searchHint: comoTexto(data.searchHint),
+      campos: comoObjeto(data.campos),
     },
   };
 }

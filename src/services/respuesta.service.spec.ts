@@ -22,6 +22,10 @@ describe('parsearRespuesta', () => {
         description: 'Compra semanal',
         date: null,
         range: null,
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
       },
     });
   });
@@ -41,6 +45,10 @@ describe('parsearRespuesta', () => {
         description: null,
         date: '2026-10-20',
         range: '15_DAYS',
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
       },
     });
   });
@@ -67,6 +75,10 @@ describe('parsearRespuesta', () => {
         description: null,
         date: null,
         range: null,
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
       },
     });
   });
@@ -97,6 +109,10 @@ describe('parsearRespuesta', () => {
         description: null,
         date: null,
         range: null,
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
       },
     });
   });

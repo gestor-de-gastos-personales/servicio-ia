@@ -27,14 +27,18 @@ const INSTRUCCION_VISION =
   'Eres un sistema de OCR y visión por computadora especializado en extraer datos de tickets y recibos.';
 
 const ESTRUCTURA_RESPUESTA = `{
-  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "CREATE_CATEGORY" | "UNKNOWN",
+  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "CREATE_CATEGORY" | "SUGGEST_RECURRING" | "SET_RECURRING" | "DELETE_EXPENSE" | "EDIT_EXPENSE" | "UNKNOWN",
   "data": {
     "total": number | null,
     "merchant": string | null,
     "category": string | null,
     "description": string | null,
     "date": "YYYY-MM-DD" | null,
-    "range": "WEEK" | "15_DAYS" | "MONTH" | "2_MONTHS" | "YEAR" | null
+    "range": "WEEK" | "15_DAYS" | "MONTH" | "2_MONTHS" | "YEAR" | null,
+    "frecuencia": "diaria" | "semanal" | "mensual" | "anual" | null,
+    "dia": number | null,
+    "searchHint": "ultimo" | null,
+    "campos": { "monto"?: number, "comercio"?: string, "categoria"?: string, "descripcion"?: string, "fecha"?: string } | null
   }
 }`;
 
@@ -42,6 +46,10 @@ const REGLAS_INTENCIONES = `REGLAS PARA "intent":
 - CREATE_EXPENSE: el usuario registra un gasto.
 - GET_SUMMARY: el usuario pide un resumen o total de gastos.
 - CREATE_CATEGORY: el usuario pide crear una categoría nueva.
+- SUGGEST_RECURRING: el usuario quiere marcar un gasto como recurrente o pregunta sobre ello.
+- SET_RECURRING: el usuario responde con frecuencia/día para configurar recurrencia.
+- DELETE_EXPENSE: el usuario quiere eliminar/borrar/sacar un gasto. Si dice "elimina el último gasto de X" pon merchant=X y searchHint="ultimo". Si solo dice "el último gasto" sin comercio, merchant=null y searchHint="ultimo".
+- EDIT_EXPENSE: el usuario quiere modificar/cambiar/corregir un gasto ya registrado. Extrae qué gasto buscar (merchant + searchHint="ultimo") y qué campos cambiar en "campos".
 - UNKNOWN: no se puede determinar la intención.`;
 
 const REGLAS_COMERCIOS = `NORMALIZACIÓN DE COMERCIOS:
