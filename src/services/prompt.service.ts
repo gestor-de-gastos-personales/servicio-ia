@@ -52,7 +52,7 @@ const REGLAS_COMERCIOS = `NORMALIZACIÓN DE COMERCIOS:
 const REGLAS_COHERENCIA_COMERCIO_CATEGORIA = `COHERENCIA ENTRE COMERCIO Y CATEGORÍA:
 - Si se indica, corrige o deduce el comercio (merchant), DEBES inferir la categoría más adecuada de la lista permitida para ese tipo de comercio.
 - Si el usuario corrige el comercio con frases como "no era en X sino en Y", "era en X, ahora es Y" o "el comercio es Y", ACTUALIZÁ también la categoría para que sea coherente con el NUEVO comercio.
-- Guía práctica: supermercados/hipermercados -> Alimentación; estaciones de servicio/nafta -> Transporte; farmacias -> Salud; gimnasios/clases -> la categoría más lógica de la lista (priorizando coherencia); restaurantes/fast food -> Alimentación; transporte/taxis -> Transporte.
+- Conocimiento de comercios argentinos: Kiosco/Shop de YPF/Shell/Axion/Esso -> Usualmente Alimentación (snacks/bebidas/cigarrillos) a menos que sea explícitamente "nafta/carga combustible" -> Transporte. Si dice "kiosco de YPF" priorizá Alimentación. Supermercados/hipermercados -> Alimentación. Estaciones de servicio SOLO cuando el gasto es de combustible/nafta/gasoil -> Transporte. Farmacias -> Salud. Gimnasios/clases -> la categoría más lógica de la lista. Restaurantes/fast food/pizzerías -> Alimentación. Transporte/taxis/remises/colectivo/subte -> Transporte. Panaderías/confiterías -> Alimentación.
 - Si el usuario especificó EXPLÍCITAMENTE una categoría distinta y es VÁLIDA para la lista, respetala ÚNICAMENTE si es coherente con el nuevo comercio. Si resulta ilógica, priorizá la coherencia con el comercio corregido.
 - Nunca inventes categorías fuera de la lista permitida.`;
 
