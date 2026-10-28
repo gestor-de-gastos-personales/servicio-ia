@@ -111,7 +111,11 @@ async function consultarIA(solicitud: SolicitudIA): Promise<RespuestaIA> {
 
 async function promptConCategorias(vision: boolean): Promise<string> {
   const categorias = await GastosApiService.getCategories();
-  return construirPromptSistema({ vision, categorias });
+  return construirPromptSistema({
+    vision,
+    categorias,
+    fechaActual: new Date().toISOString(),
+  });
 }
 
 /** Parsea un mensaje de texto plano ("Gasté 1500 en el Coto"). */

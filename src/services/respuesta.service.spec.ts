@@ -20,20 +20,66 @@ describe('parsearRespuesta', () => {
         merchant: 'Coto',
         category: 'Alimentación',
         description: 'Compra semanal',
+        date: null,
+        range: null,
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
+        recurringHint: null,
       },
     });
   });
 
-  it('devuelve UNKNOWN y nulos ante JSON inválido', () => {
-    expect(parsearRespuesta('esto no es json')).toEqual({
-      intent: 'UNKNOWN',
+  it('normaliza la fecha y el rango solicitados', () => {
+    const contenido = JSON.stringify({
+      intent: 'GET_SUMMARY',
+      data: { date: '2026-10-20', range: '15_DAYS' },
+    });
+
+    expect(parsearRespuesta(contenido)).toEqual({
+      intent: 'GET_SUMMARY',
       data: {
         total: null,
         merchant: null,
         category: null,
         description: null,
+        date: '2026-10-20',
+        range: '15_DAYS',
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
+        recurringHint: null,
       },
     });
+  });
+
+  it('descarta fechas y rangos inválidos', () => {
+    const contenido = JSON.stringify({
+      intent: 'CREATE_EXPENSE',
+      data: { date: '20/10/2026', range: 'SEMANA' },
+    });
+
+    const resultado = parsearRespuesta(contenido);
+
+    expect(resultado.data.date).toBeNull();
+    expect(resultado.data.range).toBeNull();
+  });
+
+  it('devuelve UNKNOWN y nulos ante JSON inválido', () => {
+    const resultado = parsearRespuesta('esto no es json');
+    expect(resultado.intent).toBe('UNKNOWN');
+    expect(resultado.data.total).toBeNull();
+    expect(resultado.data.merchant).toBeNull();
+    expect(resultado.data.category).toBeNull();
+    expect(resultado.data.description).toBeNull();
+    expect(resultado.data.date).toBeNull();
+    expect(resultado.data.range).toBeNull();
+    expect(resultado.data.frecuencia).toBeNull();
+    expect(resultado.data.dia).toBeNull();
+    expect(resultado.data.searchHint).toBeNull();
+    expect(resultado.data.campos).toBeNull();
   });
 
   it('devuelve UNKNOWN cuando el contenido es null o vacío', () => {
@@ -60,6 +106,13 @@ describe('parsearRespuesta', () => {
         merchant: null,
         category: null,
         description: null,
+        date: null,
+        range: null,
+        frecuencia: null,
+        dia: null,
+        searchHint: null,
+        campos: null,
+        recurringHint: null,
       },
     });
   });

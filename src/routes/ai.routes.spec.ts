@@ -25,6 +25,8 @@ function respuestaIA(
       merchant: null,
       category: null,
       description: null,
+      date: null,
+      range: null,
       ...data,
     },
   };
@@ -81,6 +83,7 @@ describe('rutas de servicio-ia', () => {
         merchant: 'Coto',
         category: 'Alimentación',
         description: 'Compra',
+        date: '2026-10-20',
       }),
     );
     mocks.processReceiptImage.mockResolvedValue(
@@ -118,6 +121,8 @@ describe('rutas de servicio-ia', () => {
       comercio: 'Coto',
       categoria: 'Alimentación',
       descripcion: 'Compra',
+      fecha: '2026-10-20',
+      rango: null,
     });
     expect(mocks.parseNaturalLanguageText).toHaveBeenCalledWith(
       'Gasté 1500 en el Coto',
