@@ -23,6 +23,7 @@ export interface RespuestaIA {
     dia?: number | null;
     searchHint?: string | null;
     campos?: Record<string, unknown> | null;
+    recurringHint?: string | null;
   };
 }
 
@@ -124,6 +125,7 @@ export function parsearRespuesta(contenido: string | null | undefined): Respuest
       dia: comoEntero(data.dia),
       searchHint: comoTexto(data.searchHint),
       campos: comoObjeto(data.campos),
+      recurringHint: comoTexto((data as Record<string, unknown>).recurringHint),
     },
   };
 }

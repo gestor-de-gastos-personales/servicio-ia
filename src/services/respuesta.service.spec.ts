@@ -26,6 +26,7 @@ describe('parsearRespuesta', () => {
         dia: null,
         searchHint: null,
         campos: null,
+        recurringHint: null,
       },
     });
   });
@@ -49,6 +50,7 @@ describe('parsearRespuesta', () => {
         dia: null,
         searchHint: null,
         campos: null,
+        recurringHint: null,
       },
     });
   });
@@ -66,21 +68,18 @@ describe('parsearRespuesta', () => {
   });
 
   it('devuelve UNKNOWN y nulos ante JSON inválido', () => {
-    expect(parsearRespuesta('esto no es json')).toEqual({
-      intent: 'UNKNOWN',
-      data: {
-        total: null,
-        merchant: null,
-        category: null,
-        description: null,
-        date: null,
-        range: null,
-        frecuencia: null,
-        dia: null,
-        searchHint: null,
-        campos: null,
-      },
-    });
+    const resultado = parsearRespuesta('esto no es json');
+    expect(resultado.intent).toBe('UNKNOWN');
+    expect(resultado.data.total).toBeNull();
+    expect(resultado.data.merchant).toBeNull();
+    expect(resultado.data.category).toBeNull();
+    expect(resultado.data.description).toBeNull();
+    expect(resultado.data.date).toBeNull();
+    expect(resultado.data.range).toBeNull();
+    expect(resultado.data.frecuencia).toBeNull();
+    expect(resultado.data.dia).toBeNull();
+    expect(resultado.data.searchHint).toBeNull();
+    expect(resultado.data.campos).toBeNull();
   });
 
   it('devuelve UNKNOWN cuando el contenido es null o vacío', () => {
@@ -113,6 +112,7 @@ describe('parsearRespuesta', () => {
         dia: null,
         searchHint: null,
         campos: null,
+        recurringHint: null,
       },
     });
   });

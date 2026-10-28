@@ -73,6 +73,7 @@ describe('ai.service', () => {
         dia: null,
         searchHint: null,
         campos: null,
+        recurringHint: null,
       },
     });
     expect(mocks.crearChat).toHaveBeenCalledWith(

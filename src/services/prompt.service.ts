@@ -38,7 +38,8 @@ const ESTRUCTURA_RESPUESTA = `{
     "frecuencia": "diaria" | "semanal" | "mensual" | "anual" | null,
     "dia": number | null,
     "searchHint": "ultimo" | null,
-    "campos": { "monto"?: number, "comercio"?: string, "categoria"?: string, "descripcion"?: string, "fecha"?: string } | null
+    "campos": { "monto"?: number, "comercio"?: string, "categoria"?: string, "descripcion"?: string, "fecha"?: string } | null,
+    "recurringHint": string | null
   }
 }`;
 
@@ -85,6 +86,12 @@ function reglasCategorias(listaCategorias: string): string {
  * Arma el prompt con la fecha actual y las categorías reales de api-gastos.
  * Si la API no devuelve categorías, usa una lista de respaldo.
  */
+const REGLAS_RECURRENCIA_HINT = `DETECCIÓN DE GASTOS RECURRENTES (PISTA):
+- Si el mensaje indica que el gasto es recurrente o usa palabras/sinónimos como: "suscripción", "suscribi", "abono", "cuota", "mensualidad", "renovación", "recurrente", "se renueva", "pago mensual/anual".
+- También considera marcas/comercios típicamente recurrentes: Netflix, Spotify, Disney+, Amazon Prime, YouTube Premium, HBO Max, Paramount+, Star+, Apple Music, iCloud, Google One, LevelGym/Level Gim/Gimnasio/Smartfit, Claro/Movistar/Personal/Telecentro (servicios), luz/agua/gas/internet/cable cuando se habla de "abono/cuota".
+- Cuando detectes esa pista para un CREATE_EXPENSE, pon "recurringHint" con la pista encontrada (ej.: "suscripción", "gimnasio", "Netflix"). Si NO hay pista clara de recurrencia, pon "recurringHint": null.
+- NO fuerces recurringHint para gastos comunes como "comida", "almuerzo", "cena", "supermercado", "nafta", "taxi", "kiosco".`;
+
 export function construirPromptSistema({
   vision,
   categorias,
@@ -103,5 +110,6 @@ export function construirPromptSistema({
     reglasCategorias(listaCategorias),
     REGLAS_COMERCIOS,
     REGLAS_COHERENCIA_COMERCIO_CATEGORIA,
+    REGLAS_RECURRENCIA_HINT,
   ].join('\n\n');
 }
