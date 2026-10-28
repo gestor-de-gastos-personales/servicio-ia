@@ -10,7 +10,7 @@
 | Aspecto | Resultado |
 |---|---|
 | Tipo de proyecto | backend |
-| Índice de calidad de servicios | **25/100** (mínimo 60) |
+| Índice de calidad de servicios | **39/100** (mínimo 60) |
 | Criterios cumplidos | **12/15** |
 | Aprobado (semáforo) | **NO** |
 | Código (LOC) | 1,109 |
@@ -47,7 +47,7 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Un resumen numérico (0-100) que combina todas las señales y métricas del análisis, con topes duros por duplicación.
 - **Por qué importa:** Ordena y prioriza la revisión: un índice bajo indica varias señales que conviene mirar juntas.
-- **Tu resultado:** índice **25/100** _(mínimo 60)_
+- **Tu resultado:** índice **39/100** _(mínimo 60)_
 - **Para investigar la causa:**
     - ¿En qué momento del proyecto se concentraron los problemas (arranque, integración de partes, cierre)?
     - ¿El índice bajó por muchas señales chicas o por una o dos graves?
@@ -151,7 +151,7 @@ Criterios que hoy están en rojo y qué habría que cambiar para alcanzar el niv
 
 | Criterio | Resultado actual | Meta | Qué arreglar |
 |---|---|---|---|
-| Índice de calidad de servicios (indice) | índice **25/100** | mínimo 60 | Subir el índice a ≥60 corrigiendo primero las señales de más peso: duplicación, secretos, SQL y capas. |
+| Índice de calidad de servicios (indice) | índice **39/100** | mínimo 60 | Subir el índice a ≥60 corrigiendo primero las señales de más peso: duplicación, secretos, SQL y capas. |
 | Consultas SQL por concatenación (SQL) | **1** consulta(s) SQL por concatenación | máximo 0 | Parametrizar las consultas en lugar de concatenar o interpolar valores; 0 casos. |
 | Endpoints del backend (EP) | **0** endpoint(s) | mínimo 10 | Exponer las operaciones del contrato que faltan hasta llegar a 10 endpoints. |
 
