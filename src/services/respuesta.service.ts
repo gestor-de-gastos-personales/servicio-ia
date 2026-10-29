@@ -60,6 +60,15 @@ const RESPUESTA_VACIA: RespuestaIA = {
   },
 };
 
+/** Devuelve una respuesta vacía nueva (evita compartir estado mutable). */
+export function crearRespuestaVacia(intent = 'UNKNOWN'): RespuestaIA {
+  return {
+    ...RESPUESTA_VACIA,
+    intent,
+    data: { ...RESPUESTA_VACIA.data },
+  };
+}
+
 function esObjeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
 }
@@ -87,6 +96,14 @@ function comoEntero(valor: unknown): number | null {
   return Number.isInteger(numero) ? numero : null;
 }
 
+/** Acepta número o texto; descarta cualquier otro tipo. */
+function comoNumeroOTexto(valor: unknown): number | string | null {
+  if (typeof valor === 'number') {
+    return Number.isFinite(valor) ? valor : null;
+  }
+  return typeof valor === 'string' ? valor : null;
+}
+
 /** Acepta únicamente fechas ISO de calendario (YYYY-MM-DD). */
 function comoFecha(valor: unknown): string | null {
   if (typeof valor !== 'string') return null;
@@ -112,11 +129,11 @@ export function parsearRespuesta(contenido: string | null | undefined): Respuest
   try {
     payload = JSON.parse(contenido || '{}');
   } catch {
-    return RESPUESTA_VACIA;
+    return crearRespuestaVacia();
   }
 
   if (!esObjeto(payload)) {
-    return RESPUESTA_VACIA;
+    return crearRespuestaVacia();
   }
 
   const data = esObjeto(payload.data) ? payload.data : {};
@@ -133,12 +150,41 @@ export function parsearRespuesta(contenido: string | null | undefined): Respuest
       frecuencia: comoTexto(data.frecuencia),
       dia: comoEntero(data.dia),
       searchHint: comoTexto(data.searchHint),
-      target: (typeof data.target === 'string' ? (data.target as any) : null) as any,
-      campo: (typeof data.campo === 'string' ? (data.campo as any) : null) as any,
-      valor: data.valor === null ? null : (typeof data.valor === 'number' ? data.valor : (typeof data.valor === 'string' ? data.valor : comoNumero(data.valor))),
+      target: comoTexto(data.target),
+      campo: comoTexto(data.campo),
+      valor: comoNumeroOTexto(data.valor),
       query: comoTexto(data.query),
       campos: comoObjeto(data.campos),
-      recurringHint: comoTexto((data as Record<string, unknown>).recurringHint),
+      recurringHint: comoTexto(data.recurringHint),
     },
   };
+}
+
+export interface ResultadoValidacion {
+  /** `true` si el contenido es JSON con `intent` textual y `data` objeto. */
+  valida: boolean;
+  /** Respuesta normalizada (aunque `valida` sea `false`). */
+  respuesta: RespuestaIA;
+}
+
+/**
+ * Valida el JSON crudo devuelto por el modelo. Se usa en `POST /validar-respuesta`
+ * para depurar respuestas antes de consumirlas en el bot.
+ */
+export function validarRespuesta(contenido: string): ResultadoValidacion {
+  const respuesta = parsearRespuesta(contenido);
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(contenido);
+  } catch {
+    return { valida: false, respuesta };
+  }
+
+  const valida =
+    esObjeto(payload) &&
+    typeof payload.intent === 'string' &&
+    esObjeto(payload.data);
+
+  return { valida, respuesta };
 }

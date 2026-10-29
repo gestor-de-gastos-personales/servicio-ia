@@ -95,9 +95,43 @@ describe('GastosApiService', () => {
     await expect(GastosApiService.getCategories()).resolves.toEqual([]);
   });
 
+  it('deduplica categorías con el mismo nombre sin importar mayúsculas', async () => {
+    fetchMock.mockResolvedValue(
+      respuestaJson([
+        { nombre: 'Alimentación' },
+        { nombre: 'alimentación' },
+        { nombre: 'Transporte' },
+      ]),
+    );
+
+    await expect(GastosApiService.getCategories()).resolves.toEqual([
+      'Alimentación',
+      'Transporte',
+    ]);
+  });
+
   it('devuelve un array vacío si la petición falla', async () => {
     fetchMock.mockRejectedValue(new Error('sin red'));
 
     await expect(GastosApiService.getCategories()).resolves.toEqual([]);
+  });
+
+  it('indica disponibilidad cuando api-gastos responde ok', async () => {
+    fetchMock.mockResolvedValue(respuestaJson([]));
+
+    await expect(GastosApiService.estaDisponible()).resolves.toBe(true);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('http://api.test/categorias');
+  });
+
+  it('indica no disponibilidad cuando api-gastos falla', async () => {
+    fetchMock.mockResolvedValue(respuestaError(503));
+
+    await expect(GastosApiService.estaDisponible()).resolves.toBe(false);
+  });
+
+  it('indica no disponibilidad cuando hay un error de red', async () => {
+    fetchMock.mockRejectedValue(new Error('sin red'));
+
+    await expect(GastosApiService.estaDisponible()).resolves.toBe(false);
   });
 });

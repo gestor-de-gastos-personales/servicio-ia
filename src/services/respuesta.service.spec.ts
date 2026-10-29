@@ -25,6 +25,10 @@ describe('parsearRespuesta', () => {
         frecuencia: null,
         dia: null,
         searchHint: null,
+        target: null,
+        campo: null,
+        valor: null,
+        query: null,
         campos: null,
         recurringHint: null,
       },
@@ -49,6 +53,10 @@ describe('parsearRespuesta', () => {
         frecuencia: null,
         dia: null,
         searchHint: null,
+        target: null,
+        campo: null,
+        valor: null,
+        query: null,
         campos: null,
         recurringHint: null,
       },
@@ -111,6 +119,10 @@ describe('parsearRespuesta', () => {
         frecuencia: null,
         dia: null,
         searchHint: null,
+        target: null,
+        campo: null,
+        valor: null,
+        query: null,
         campos: null,
         recurringHint: null,
       },
@@ -127,5 +139,44 @@ describe('parsearRespuesta', () => {
 
     expect(resultado.intent).toBe('GET_SUMMARY');
     expect(resultado.data.total).toBeNull();
+  });
+
+  it('normaliza los campos de edición, búsqueda y filtros', () => {
+    const contenido = JSON.stringify({
+      intent: 'EDIT_EXPENSE',
+      data: {
+        target: 'last',
+        campo: 'monto',
+        valor: 2500,
+        query: 'coto',
+        campos: { monto: 2500, comercio: 'Coto' },
+      },
+    });
+
+    const resultado = parsearRespuesta(contenido);
+
+    expect(resultado.data.target).toBe('last');
+    expect(resultado.data.campo).toBe('monto');
+    expect(resultado.data.valor).toBe(2500);
+    expect(resultado.data.query).toBe('coto');
+    expect(resultado.data.campos).toEqual({ monto: 2500, comercio: 'Coto' });
+  });
+
+  it('acepta un valor de edición en texto', () => {
+    const contenido = JSON.stringify({
+      intent: 'EDIT_EXPENSE',
+      data: { valor: '2500' },
+    });
+
+    expect(parsearRespuesta(contenido).data.valor).toBe('2500');
+  });
+
+  it('descarta un valor de edición de tipo inválido', () => {
+    const contenido = JSON.stringify({
+      intent: 'EDIT_EXPENSE',
+      data: { valor: { monto: 10 } },
+    });
+
+    expect(parsearRespuesta(contenido).data.valor).toBeNull();
   });
 });

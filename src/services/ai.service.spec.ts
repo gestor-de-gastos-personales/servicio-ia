@@ -22,7 +22,11 @@ vi.mock('./gastos-api.service.js', () => ({
   GastosApiService: { getCategories: mocks.getCategories },
 }));
 
-import { parseNaturalLanguageText, processReceiptImage } from './ai.service.js';
+import {
+  parseNaturalLanguageText,
+  parsearLote,
+  processReceiptImage,
+} from './ai.service.js';
 
 function contenidoOpenRouter(payload: unknown) {
   return { choices: [{ message: { content: JSON.stringify(payload) } }] };
@@ -72,6 +76,10 @@ describe('ai.service', () => {
         frecuencia: null,
         dia: null,
         searchHint: null,
+        target: null,
+        campo: null,
+        valor: null,
+        query: null,
         campos: null,
         recurringHint: null,
       },
@@ -192,5 +200,17 @@ describe('ai.service', () => {
         ]),
       }),
     );
+  });
+
+  it('analiza un lote de textos respetando el orden', async () => {
+    mocks.crearChat.mockResolvedValue(
+      contenidoOpenRouter({ intent: 'CREATE_EXPENSE', data: { total: 5 } }),
+    );
+
+    const resultados = await parsearLote(['uno', 'dos', 'tres']);
+
+    expect(resultados).toHaveLength(3);
+    expect(resultados.every((r) => r.intent === 'CREATE_EXPENSE')).toBe(true);
+    expect(mocks.crearChat).toHaveBeenCalledTimes(3);
   });
 });
