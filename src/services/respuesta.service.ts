@@ -22,6 +22,10 @@ export interface RespuestaIA {
     frecuencia?: string | null;
     dia?: number | null;
     searchHint?: string | null;
+    target?: 'last' | 'by_commerce' | string | null;
+    campo?: 'monto' | 'comercio' | 'categoria' | 'descripcion' | 'fecha' | string | null;
+    valor?: number | string | null;
+    query?: string | null;
     campos?: Record<string, unknown> | null;
     recurringHint?: string | null;
   };
@@ -47,7 +51,12 @@ const RESPUESTA_VACIA: RespuestaIA = {
     frecuencia: null,
     dia: null,
     searchHint: null,
+    target: null,
+    campo: null,
+    valor: null,
+    query: null,
     campos: null,
+    recurringHint: null,
   },
 };
 
@@ -124,6 +133,10 @@ export function parsearRespuesta(contenido: string | null | undefined): Respuest
       frecuencia: comoTexto(data.frecuencia),
       dia: comoEntero(data.dia),
       searchHint: comoTexto(data.searchHint),
+      target: (typeof data.target === 'string' ? (data.target as any) : null) as any,
+      campo: (typeof data.campo === 'string' ? (data.campo as any) : null) as any,
+      valor: data.valor === null ? null : (typeof data.valor === 'number' ? data.valor : (typeof data.valor === 'string' ? data.valor : comoNumero(data.valor))),
+      query: comoTexto(data.query),
       campos: comoObjeto(data.campos),
       recurringHint: comoTexto((data as Record<string, unknown>).recurringHint),
     },

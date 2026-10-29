@@ -24,10 +24,10 @@ const INSTRUCCION_TEXTO =
   'Eres un asistente financiero especializado en estructurar gastos e intenciones.';
 
 const INSTRUCCION_VISION =
-  'Eres un sistema de OCR y visión por computadora especializado en extraer datos de tickets y recibos.';
+  'Eres un sistema de OCR y visión por computadora especializado en extraer datos de tickets y recibos. Para categorizar, ignorá completamente cualquier etiqueta de categoría que aparezca impresa en el ticket.';
 
 const ESTRUCTURA_RESPUESTA = `{
-  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "CREATE_CATEGORY" | "SUGGEST_RECURRING" | "SET_RECURRING" | "DELETE_EXPENSE" | "EDIT_EXPENSE" | "UNKNOWN",
+  "intent": "CREATE_EXPENSE" | "GET_SUMMARY" | "CREATE_CATEGORY" | "SUGGEST_RECURRING" | "SET_RECURRING" | "DELETE_EXPENSE" | "EDIT_EXPENSE" | "SHOW_EXPENSE" | "UPDATE_EXPENSE" | "UNKNOWN",
   "data": {
     "total": number | null,
     "merchant": string | null,
