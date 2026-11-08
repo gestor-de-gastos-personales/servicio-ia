@@ -60,31 +60,91 @@ function contenidoUsuario(solicitud: SolicitudIA) {
   ];
 }
 
+/** Errores en los que vale la pena probar el siguiente modelo. */
+function errorReintentable(error: unknown): boolean {
+  const status = (error as { status?: number } | null)?.status;
+  return (
+    status === 402 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504
+  );
+}
+
+/** Modelo principal + respaldos configurados, sin repetidos. */
+function modelosOpenRouter(esVision: boolean): string[] {
+  const principal = esVision
+    ? process.env.OPENROUTER_VISION_MODEL || 'openai/gpt-4o-mini'
+    : process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat';
+  const variable = esVision
+    ? process.env.OPENROUTER_VISION_FALLBACK_MODELS
+    : process.env.OPENROUTER_FALLBACK_MODELS;
+
+  const respaldos = (variable ?? '')
+    .split(',')
+    .map((modelo) => modelo.trim())
+    .filter(Boolean);
+
+  return [...new Set([principal, ...respaldos])];
+}
+
 async function consultarOpenRouter(
   solicitud: SolicitudIA,
 ): Promise<string | null | undefined> {
   const esVision = solicitud.imagen !== undefined;
+  const modelos = modelosOpenRouter(esVision);
+  let ultimoError: unknown = null;
+  let huboRespuesta = false;
+  let huboLimite = false;
 
-  const response = await getOpenAIClient().chat.completions.create({
-    model: esVision
-      ? process.env.OPENROUTER_VISION_MODEL || 'openai/gpt-4o-mini'
-      : process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat',
-    response_format: { type: 'json_object' },
-    max_tokens: esVision ? 768 : 512,
-    messages: [
-      { role: 'system', content: solicitud.promptSistema },
-      { role: 'user', content: contenidoUsuario(solicitud) },
-    ],
-  });
+  for (const modelo of modelos) {
+    try {
+      const response = await getOpenAIClient().chat.completions.create({
+        model: modelo,
+        response_format: { type: 'json_object' },
+        max_tokens: esVision ? 768 : 512,
+        messages: [
+          { role: 'system', content: solicitud.promptSistema },
+          { role: 'user', content: contenidoUsuario(solicitud) },
+        ],
+      });
 
-  return response.choices[0]?.message?.content;
+      const contenido = response.choices[0]?.message?.content;
+      if (contenido) return contenido;
+
+      // Un modelo de razonamiento puede gastar todo el presupuesto sin
+      // devolver contenido: se intenta con el siguiente de la cadena.
+      huboRespuesta = true;
+      ultimoError ??= new Error(`El modelo ${modelo} no devolvió contenido`);
+    } catch (error) {
+      ultimoError = error;
+      if (!errorReintentable(error)) throw error;
+      huboLimite = true;
+    }
+  }
+
+  // Si algún modelo respondió (aunque sea vacío) y no hubo límites de por medio
+  // se conserva el comportamiento previo: la respuesta se interpreta como
+  // UNKNOWN. Si hubo 402/429/5xx, se propaga el error para que el usuario
+  // reciba "reintentá" en lugar de "no entendí".
+  if (huboRespuesta && !huboLimite) return null;
+  throw ultimoError ?? new Error('No hay modelos de OpenRouter disponibles');
+}
+
+/** Modelo de Ollama para cada caso: las imágenes usan un modelo con visión. */
+function modeloOllama(esVision: boolean): string {
+  const texto = process.env.OLLAMA_MODEL || 'llama3.2:3b';
+  if (!esVision) return texto;
+  return process.env.OLLAMA_VISION_MODEL || texto;
 }
 
 async function consultarOllama(
   solicitud: SolicitudIA,
 ): Promise<string | null | undefined> {
   const response = await getOllamaClient().chat({
-    model: process.env.OLLAMA_MODEL || 'llama3.2-vision',
+    model: modeloOllama(solicitud.imagen !== undefined),
     format: 'json',
     messages: [
       { role: 'system', content: solicitud.promptSistema },

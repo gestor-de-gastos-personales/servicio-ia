@@ -130,6 +130,60 @@ describe('ai.service', () => {
     );
   });
 
+  it('prueba el modelo de respaldo cuando el principal da 429', async () => {
+    vi.stubEnv('OPENROUTER_FALLBACK_MODELS', 'modelo-respaldo');
+    mocks.crearChat
+      .mockRejectedValueOnce(Object.assign(new Error('429'), { status: 429 }))
+      .mockResolvedValueOnce(
+        contenidoOpenRouter({ intent: 'GET_SUMMARY', data: {} }),
+      );
+
+    const resultado = await parseNaturalLanguageText('¿cuánto gasté?');
+
+    expect(resultado.intent).toBe('GET_SUMMARY');
+    expect(mocks.crearChat).toHaveBeenCalledTimes(2);
+    expect(mocks.crearChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ model: 'modelo-respaldo' }),
+    );
+  });
+
+  it('usa el respaldo de visión si el principal no devuelve contenido', async () => {
+    vi.stubEnv('OPENROUTER_VISION_FALLBACK_MODELS', 'modelo-vision-respaldo');
+    mocks.crearChat
+      .mockResolvedValueOnce({ choices: [] })
+      .mockResolvedValueOnce(
+        contenidoOpenRouter({ intent: 'CREATE_EXPENSE', data: { total: 500 } }),
+      );
+
+    const resultado = await processReceiptImage(Buffer.from('foto'));
+
+    expect(resultado.data.total).toBe(500);
+    expect(mocks.crearChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ model: 'modelo-vision-respaldo' }),
+    );
+  });
+
+  it('no prueba respaldos con un error no reintentable', async () => {
+    vi.stubEnv('OPENROUTER_FALLBACK_MODELS', 'modelo-respaldo');
+    mocks.crearChat.mockRejectedValue(
+      Object.assign(new Error('400 petición inválida'), { status: 400 }),
+    );
+
+    await expect(parseNaturalLanguageText('hola')).rejects.toThrow('400');
+    expect(mocks.crearChat).toHaveBeenCalledTimes(1);
+  });
+
+  it('propaga el error cuando hubo límite y ningún modelo devolvió contenido', async () => {
+    vi.stubEnv('OPENROUTER_FALLBACK_MODELS', 'modelo-respaldo');
+    mocks.crearChat
+      .mockRejectedValueOnce(Object.assign(new Error('429 límite'), { status: 429 }))
+      .mockResolvedValueOnce({ choices: [] });
+
+    await expect(parseNaturalLanguageText('hola')).rejects.toThrow('429');
+  });
+
   it('usa Ollama cuando AI_PROVIDER=ollama', async () => {
     vi.stubEnv('AI_PROVIDER', 'ollama');
     mocks.ollamaChat.mockResolvedValue({
@@ -163,6 +217,7 @@ describe('ai.service', () => {
 
     expect(mocks.ollamaChat).toHaveBeenCalledWith(
       expect.objectContaining({
+        model: 'modelo-ollama',
         messages: expect.arrayContaining([
           expect.objectContaining({
             role: 'user',
@@ -173,6 +228,33 @@ describe('ai.service', () => {
     );
   });
 
+  it('usa OLLAMA_VISION_MODEL para las imágenes cuando está configurado', async () => {
+    vi.stubEnv('AI_PROVIDER', 'ollama');
+    vi.stubEnv('OLLAMA_VISION_MODEL', 'modelo-ollama-vision');
+    mocks.ollamaChat.mockResolvedValue({
+      message: { content: JSON.stringify({ intent: 'UNKNOWN', data: {} }) },
+    });
+
+    await processReceiptImage(Buffer.from('ticket'));
+
+    expect(mocks.ollamaChat).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'modelo-ollama-vision' }),
+    );
+  });
+
+  it('con Ollama usa el modelo de texto aunque haya un modelo de visión configurado', async () => {
+    vi.stubEnv('AI_PROVIDER', 'ollama');
+    vi.stubEnv('OLLAMA_VISION_MODEL', 'modelo-ollama-vision');
+    mocks.ollamaChat.mockResolvedValue({
+      message: { content: JSON.stringify({ intent: 'GET_SUMMARY', data: {} }) },
+    });
+
+    await parseNaturalLanguageText('¿cuánto gasté?');
+
+    expect(mocks.ollamaChat).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'modelo-ollama' }),
+    );
+  });
   it('devuelve UNKNOWN si el modelo no devuelve contenido', async () => {
     mocks.crearChat.mockResolvedValue({ choices: [] });
 
