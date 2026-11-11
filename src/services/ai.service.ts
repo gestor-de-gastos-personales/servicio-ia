@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { randomUUID } from 'node:crypto';
 import { Ollama } from 'ollama';
 import { normalizarCategoria } from './categoria.service.js';
 import { GastosApiService } from './gastos-api.service.js';
@@ -28,8 +29,14 @@ function getOpenAIClient(): OpenAI {
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) throw new Error('Falta OPENROUTER_API_KEY');
     openrouterClient = new OpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
+      // Compatible con OpenRouter y con OpenCode Go (endpoint OpenAI).
+      baseURL:
+        process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
       apiKey,
+      defaultHeaders: {
+        'User-Agent': 'mangos-servicio-ia/1.0',
+        'x-opencode-session': `svc-ia-${randomUUID()}`,
+      },
     });
   }
   return openrouterClient;

@@ -154,6 +154,9 @@ describe('rutas de servicio-ia', () => {
       descripcion: 'Compra',
       fecha: '2026-10-20',
       rango: null,
+      recurringHint: null,
+      searchHint: null,
+      campos: null,
     });
     expect(mocks.parseNaturalLanguageText).toHaveBeenCalledWith(
       'Gasté 1500 en el Coto',

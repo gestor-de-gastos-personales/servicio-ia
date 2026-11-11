@@ -59,6 +59,11 @@ function respuestaGasto(resultado: RespuestaIA, intentPorDefecto: string) {
     descripcion: resultado.data.description,
     fecha: resultado.data.date,
     rango: resultado.data.range,
+    // El bot lo usa para preguntar si el gasto es recurrente (Netflix, gym, etc.).
+    recurringHint: resultado.data.recurringHint ?? null,
+    // Pistas para acciones sobre gastos existentes (eliminar/editar).
+    searchHint: resultado.data.searchHint ?? null,
+    campos: resultado.data.campos ?? null,
   };
 }
 
@@ -66,16 +71,16 @@ function proveedorActivo(): 'openrouter' | 'ollama' {
   return process.env.AI_PROVIDER === 'ollama' ? 'ollama' : 'openrouter';
 }
 
-export async function aiRoutes(fastify: FastifyInstance) {
+export async function aiRoutes(app: FastifyInstance) {
   // Endpoint de salud: útil para verificar que el servicio está levantado.
-  fastify.get('/health', async () => ({
+  app.get('/health', async () => ({
     status: 'ok',
     servicio: 'servicio-ia',
     timestamp: new Date().toISOString(),
   }));
 
   // Readiness: además de estar vivo, verifica que api-gastos responda.
-  fastify.get('/ready', async (_request, reply) => {
+  app.get('/ready', async (_request, reply) => {
     const apiGastos = await GastosApiService.estaDisponible();
     return reply.status(apiGastos ? 200 : 503).send({
       status: apiGastos ? 'ok' : 'degraded',
@@ -86,40 +91,38 @@ export async function aiRoutes(fastify: FastifyInstance) {
   });
 
   // Versión desplegada y proveedor de IA activo.
-  fastify.get('/version', async () => ({
+  app.get('/version', async () => ({
     servicio: 'servicio-ia',
     version: obtenerVersion(),
     aiProvider: proveedorActivo(),
   }));
 
   // Catálogo de intenciones que el prompt puede devolver.
-  fastify.get('/intents', async () => ({
+  app.get('/intents', async () => ({
     intents: INTENCIONES_SOPORTADAS,
     total: INTENCIONES_SOPORTADAS.length,
   }));
 
   // Categorías reales de api-gastos (con caché corta).
-  fastify.get('/categorias', async () => {
+  app.get('/categorias', async () => {
     const categorias = await obtenerCategorias();
     return { categorias, total: categorias.length };
   });
 
   // Procesa mensajes de texto plano enviados desde Telegram.
-  fastify.post<{ Body: CuerpoTexto }>(
-    '/analizar',
-    { schema: esquemaAnalizarTexto },
-    async (request) => {
-      const resultado = await parseNaturalLanguageText(request.body.texto);
-      return respuestaGasto(resultado, 'UNKNOWN');
-    },
-  );
+  app.post('/analizar', { schema: esquemaAnalizarTexto }, async (request) => {
+    const { texto } = request.body as CuerpoTexto;
+    const resultado = await parseNaturalLanguageText(texto);
+    return respuestaGasto(resultado, 'UNKNOWN');
+  });
 
   // Procesa varios textos en una sola llamada (mantiene el orden de entrada).
-  fastify.post<{ Body: CuerpoLote }>(
+  app.post(
     '/analizar-lote',
     { schema: esquemaAnalizarLote },
     async (request) => {
-      const resultados = await parsearLote(request.body.textos);
+      const { textos } = request.body as CuerpoLote;
+      const resultados = await parsearLote(textos);
       return {
         resultados: resultados.map((resultado) =>
           respuestaGasto(resultado, 'UNKNOWN'),
@@ -129,7 +132,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
   );
 
   // Procesa la foto de un ticket/comprobante.
-  fastify.post('/analizar-imagen', async (request, reply) => {
+  app.post('/analizar-imagen', async (request, reply) => {
     if (!request.isMultipart()) {
       return responderError(
         reply,
@@ -167,23 +170,25 @@ export async function aiRoutes(fastify: FastifyInstance) {
   });
 
   // Infiere la categoría de un comercio/texto libre usando las reglas de visión.
-  fastify.post<{ Body: CuerpoNormalizarCategoria }>(
+  app.post(
     '/normalizar-categoria',
     { schema: esquemaNormalizarCategoria },
     async (request) => {
+      const body = request.body as CuerpoNormalizarCategoria;
       const categorias = await obtenerCategorias();
       return inferirCategoriaPorComercio({
-        comercio: request.body.comercio,
-        descripcion: request.body.descripcion ?? null,
+        comercio: body.comercio,
+        descripcion: body.descripcion ?? null,
         categorias,
       });
     },
   );
 
   // Parsea y valida el JSON crudo devuelto por un modelo.
-  fastify.post<{ Body: CuerpoValidarRespuesta }>(
+  app.post(
     '/validar-respuesta',
     { schema: esquemaValidarRespuesta },
-    async (request) => validarRespuesta(request.body.contenido),
+    async (request) =>
+      validarRespuesta((request.body as CuerpoValidarRespuesta).contenido),
   );
 }
