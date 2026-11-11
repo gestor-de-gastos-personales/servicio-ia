@@ -6,3 +6,27 @@ Detalle completo en [`docs/EVALUACION.md`](docs/EVALUACION.md).
 <!-- calidad:fin -->
 
 # servicio-ia
+
+Servicio Fastify de intención/visión para Mangos. Recibe texto o imágenes de
+tickets y devuelve el contrato que consume `bot-telegram`.
+
+## Endpoints
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/health` | Liveness: el proceso está vivo. |
+| GET | `/ready` | Readiness: verifica además que `api-gastos` responda (503 si no). |
+| GET | `/version` | Versión desplegada y proveedor de IA activo. |
+| GET | `/intents` | Catálogo de intenciones soportadas por el prompt. |
+| GET | `/categorias` | Categorías reales de `api-gastos` con caché corta (`CATEGORIAS_CACHE_MS`). |
+| POST | `/analizar` | `{ texto }` → gasto/intención normalizados. |
+| POST | `/analizar-lote` | `{ textos: string[] }` (1–20) → `{ resultados: [...] }` en orden. |
+| POST | `/analizar-imagen` | `multipart/form-data` con `file` de imagen → gasto normalizado. |
+| POST | `/normalizar-categoria` | `{ comercio, descripcion? }` → categoría inferida por marca/comercio. |
+| POST | `/validar-respuesta` | `{ contenido }` → `{ valida, respuesta }` para depurar JSON del modelo. |
+
+## Variables de entorno
+
+Ver [`.env.example`](.env.example). `API_GASTOS_URL` es obligatoria para la
+normalización de categorías; `CATEGORIAS_CACHE_MS` ajusta la caché (60 s por
+defecto).

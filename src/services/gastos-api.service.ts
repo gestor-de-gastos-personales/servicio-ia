@@ -54,6 +54,18 @@ export class GastosApiService {
   }
 
   /**
+   * Comprueba si api-gastos responde. Se usa en `GET /ready`.
+   */
+  static async estaDisponible(): Promise<boolean> {
+    try {
+      const response = await fetch(`${getApiGastosUrl()}/categorias`);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Devuelve los nombres de las categorías vigentes de api-gastos.
    * Ante cualquier error devuelve un array vacío para no frenar el análisis.
    */
@@ -69,7 +81,13 @@ export class GastosApiService {
 
       return data
         .map((categoria) => (categoria as { nombre?: string }).nombre)
-        .filter((nombre): nombre is string => typeof nombre === 'string');
+        .filter((nombre): nombre is string => typeof nombre === 'string')
+        .filter(
+          (nombre, indice, nombres) =>
+            nombres.findIndex(
+              (otro) => otro.toLowerCase() === nombre.toLowerCase(),
+            ) === indice,
+        );
     } catch {
       return [];
     }
