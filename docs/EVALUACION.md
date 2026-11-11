@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-06.
+> Generado: 2026-11-11.
 
 ## 1. Veredicto
 
@@ -38,7 +38,7 @@
 
 | Alumno | Sesiones | Cumplimiento | Pausa | Recencia | IC | Nivel | Para subir de nivel |
 |---|--:|--:|--:|--:|--:|--|--|
-| blevatino | 15 | 62% | 19 d | 50% | **48** | Aprueba | Cumplimiento 62% (mín. 100%); Pausa 19 d (máx. 5 d); Recencia 50% (mín. 75%) |
+| blevatino | 16 | 62% | 19 d | 71% | **50** | Aprueba | Cumplimiento 62% (mín. 100%); Pausa 19 d (máx. 5 d); Recencia 71% (mín. 75%) |
 
 > Para aprobar el IC: **2 sesiones por semana** sostenidas, sin pausas mayores a **10 días** y con actividad en las **últimas 2 semanas**. Se excluyen merges, bots y al docente. Zona horaria UTC-3.
 
@@ -150,13 +150,13 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 ## 6. Actividad en clase (miércoles y viernes)
 
-> Se consideran las **23 clases** del período (miércoles y viernes; Nov 4 y 6 quedan afuera porque el calendario las marca sin clase). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
+> Se consideran las **23 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
 
 ### blevatino
 
 **14/23 clases con actividad** · 34 commits · 16 merges
 
-| Fecha | Marca | Repositorios | Commits / merges |
+| Fecha | Actividad | Repositorios | Commits / merges |
 |---|:--:|---|--:|
 | 2026-08-14 | No | sin actividad | 0 / 0 |
 | 2026-08-19 | No | sin actividad | 0 / 0 |
