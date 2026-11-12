@@ -64,6 +64,12 @@ function respuestaGasto(resultado: RespuestaIA, intentPorDefecto: string) {
     // Pistas para acciones sobre gastos existentes (eliminar/editar).
     searchHint: resultado.data.searchHint ?? null,
     campos: resultado.data.campos ?? null,
+    target: resultado.data.target ?? null,
+    campo: resultado.data.campo ?? null,
+    valor: resultado.data.valor ?? null,
+    query: resultado.data.query ?? null,
+    frecuencia: resultado.data.frecuencia ?? null,
+    dia: resultado.data.dia ?? null,
   };
 }
 
