@@ -157,6 +157,12 @@ describe('rutas de servicio-ia', () => {
       recurringHint: null,
       searchHint: null,
       campos: null,
+      target: null,
+      campo: null,
+      valor: null,
+      query: null,
+      frecuencia: null,
+      dia: null,
     });
     expect(mocks.parseNaturalLanguageText).toHaveBeenCalledWith(
       'Gasté 1500 en el Coto',
