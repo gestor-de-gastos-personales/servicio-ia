@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-11.
+> Generado: 2026-11-13.
 
 ## 1. Veredicto
 
@@ -11,12 +11,12 @@
 |---|---|
 | Tipo de proyecto | backend |
 | Índice de calidad de servicios | **100/100** (mínimo 50) |
-| Criterios cumplidos | **14/15** |
+| Criterios cumplidos | **15/15** |
 | Aprobado (semáforo) | **SI** |
-| Código (LOC) | 1,429 |
+| Código (LOC) | 1,441 |
 | Archivos de código | 14 |
 | Tests (archivos) | 10 |
-| Cobertura de líneas | 91.5% (mínimo 80%) |
+| Cobertura de líneas | 93.9% (mínimo 80%) |
 | Capas detectadas | presentacion, logica |
 | Pushes directos a `main` (sin PR) | 4 |
 
@@ -28,7 +28,7 @@
 
 | Autor | Commits | Código (LOC) | Tests (LOC) | Docs (LOC) | Días activos | % del código |
 |---|---:|---:|---:|---:|---:|---:|
-| blevatino | 19 | 1,642 | 1,498 | 25 | 8 | 100% |
+| blevatino | 20 | 1,654 | 1,501 | 25 | 8 | 100% |
 
 > _El LOC de autoría lo calcula RepoSense sobre el historial y puede diferir del LOC de código del análisis de calidad (que mira solo el estado de `main`)._
 
@@ -38,7 +38,7 @@
 
 | Alumno | Sesiones | Cumplimiento | Pausa | Recencia | IC | Nivel | Para subir de nivel |
 |---|--:|--:|--:|--:|--:|--|--|
-| blevatino | 17 | 66% | 19 d | 100% | **57** | Aprueba | Cumplimiento 66% (mín. 100%); Pausa 19 d (máx. 5 d) |
+| blevatino | 18 | 68% | 19 d | 93% | **58** | Aprueba | Cumplimiento 68% (mín. 100%); Pausa 19 d (máx. 5 d) |
 
 > Para aprobar el IC: **2 sesiones por semana** sostenidas, sin pausas mayores a **10 días** y con actividad en las **últimas 2 semanas**. Se excluyen merges, bots y al docente. Zona horaria UTC-3.
 
@@ -110,7 +110,7 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Complejidad ciclomática: cantidad de caminos posibles dentro de una función (condicionales, bucles, casos).
 - **Por qué importa:** Muchos caminos = difícil de seguir y de probar; suelen esconderse casos sin cubrir.
-- **Tu resultado:** **1** bloque(s) de complejidad alta _(máximo 5 por 1000 LOC (tenés 1429 LOC))_
+- **Tu resultado:** **1** bloque(s) de complejidad alta _(máximo 5 por 1000 LOC (tenés 1441 LOC))_
 
 ### 12. Funciones/métodos largos o con muchos parámetros (Tam) — OK
 
@@ -128,33 +128,25 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 
 - **Qué mide:** Porcentaje de líneas de código ejecutadas por la suite de tests (cobertura real, no cantidad de archivos de test).
 - **Por qué importa:** Un test que existe pero no ejecuta el código no protege de nada: la cobertura muestra qué partes quedan sin verificar.
-- **Tu resultado:** **91.5%** de líneas cubiertas · fuente: ejecución: vitest _(mínimo 80% de líneas)_
+- **Tu resultado:** **93.9%** de líneas cubiertas · fuente: artefacto: coverage/coverage-summary.json _(mínimo 80% de líneas)_
 
-### 15. Endpoints del backend (EP) — A REVISAR
+### 15. Endpoints del backend (EP) — OK
 
 - **Qué mide:** Cantidad de endpoints (rutas HTTP) expuestos por el backend.
 - **Por qué importa:** El backend se mide por lo que expone: pocos endpoints sugiere poca funcionalidad de servicio.
-- **Tu resultado:** **0** endpoint(s) _(mínimo 5)_
-- **Para investigar la causa:**
-    - ¿Está claro el contrato del backend (qué operaciones ofrece)?
-    - ¿Cuántas operaciones del enunciado resuelve la API?
-    - ¿Hay operaciones que el frontend resuelve por fuera del backend?
+- **Tu resultado:** **10** endpoint(s) _(mínimo 5)_
 
 ## 5. Observaciones y qué falta
 
-**Aprobado con observaciones.** Estos criterios quedan en rojo (se permiten hasta **3** sin que sean compuertas críticas), así que no bloquean la aprobación pero conviene corregirlos:
+_Cumple **todos** los criterios del semáforo: no hay nada que arreglar para aprobar. El siguiente objetivo es sostenerlo y mejorar duplicación y diseño._
 
-| Criterio | Resultado actual | Meta | Brecha | Cómo alcanzarlo |
-|---|---|---|---|---|
-| Endpoints del backend (EP) | **0** endpoint(s) | mínimo 5 | faltan 5 endpoint(s) | Implementá y exponé las operaciones del contrato que faltan (CRUD y consultas del enunciado) hasta llegar a 5 endpoints. |
+## 6. Actividad en clase y fuera de clase
 
-## 6. Actividad en clase (miércoles y viernes)
-
-> Se consideran las **26 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
+> Se consideran las **27 clases** del período (miércoles y viernes, según `config/constancia.json`; feriados y semanas sin clase descontados). Para cada alumno se muestra la actividad **en cada clase** y también la actividad **fuera de los días de clase** (fines de semana u otros días). `Commits` = commits de trabajo (no-merge); `Merges` = merges de PR (también son push). Los días sin actividad dicen **sin actividad**.
 
 ### blevatino
 
-**15/26 clases con actividad** · 37 commits · 22 merges
+**15/27 clases con actividad** · total del período: 57 commits · 23 merges
 
 | Fecha | Actividad | Repositorios | Commits / merges |
 |---|:--:|---|--:|
@@ -183,11 +175,23 @@ Cada aspecto indica **qué mide**, **por qué importa** y **tu resultado**. Cuan
 | 2026-10-30 | **Sí** | front-web | 1 / 0 |
 | 2026-11-04 | No | sin actividad | 0 / 0 |
 | 2026-11-06 | No | sin actividad | 0 / 0 |
-| 2026-11-11 | **Sí** | api-gastos, bot-telegram, servicio-ia | 3 / 6 |
+| 2026-11-11 | **Sí** | api-gastos, bot-telegram, front-web, servicio-ia | 23 / 7 |
+| 2026-11-13 | No | sin actividad | 0 / 0 |
+
+**Fuera de clase:** 6 fecha(s) con actividad · 74 commits · 10 merges
+
+| Fecha | Repositorios | Commits / merges |
+|---|---|--:|
+| 2026-10-13 | api-gastos, bot-telegram, servicio-ia | 8 / 1 |
+| 2026-10-22 | api-gastos, bot-telegram, servicio-ia | 40 / 6 |
+| 2026-10-27 | api-gastos, bot-telegram | 2 / 0 |
+| 2026-10-29 | api-gastos, bot-telegram, servicio-ia | 5 / 0 |
+| 2026-11-07 | api-gastos, bot-telegram, servicio-ia | 3 / 0 |
+| 2026-11-12 | api-gastos, front-web, servicio-ia | 16 / 3 |
 
 ## 7. Anexo: dónde mirar
 
-Archivos donde el análisis encontró cada señal en rojo (sin número de línea, a propósito):
+_No hay criterios en rojo con archivos asociados._
 
 ---
 _Informe generado por la cátedra. Los umbrales corresponden al perfil `exigente`. Ante dudas, revisá el archivo señalado y el criterio en `CRITERIOS-CALIDAD.md`._
