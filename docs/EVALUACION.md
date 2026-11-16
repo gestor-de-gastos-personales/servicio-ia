@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-14.
+> Generado: 2026-11-16.
 
 ## 1. Veredicto
 
@@ -38,7 +38,7 @@
 
 | Alumno | Sesiones | Cumplimiento | Pausa | Recencia | IC | Nivel | Para subir de nivel |
 |---|--:|--:|--:|--:|--:|--|--|
-| blevatino | 18 | 68% | 19 d | 93% | **58** | Aprueba | Cumplimiento 68% (mín. 100%); Pausa 19 d (máx. 5 d) |
+| blevatino | 19 | 70% | 19 d | 86% | **58** | Aprueba | Cumplimiento 70% (mín. 100%); Pausa 19 d (máx. 5 d) |
 
 > Para aprobar el IC: **2 sesiones por semana** sostenidas, sin pausas mayores a **10 días** y con actividad en las **últimas 2 semanas**. Se excluyen merges, bots y al docente. Zona horaria UTC-3.
 
@@ -178,7 +178,7 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 | 2026-11-11 | **Sí** | api-gastos, bot-telegram, front-web, servicio-ia | 23 / 7 |
 | 2026-11-13 | **Sí** | api-gastos, bot-telegram, front-web, servicio-ia | 0 / 9 |
 
-**Fuera de clase:** 6 fecha(s) con actividad · 74 commits · 10 merges
+**Fuera de clase:** 7 fecha(s) con actividad · 80 commits · 12 merges
 
 | Fecha | Repositorios | Commits / merges |
 |---|---|--:|
@@ -188,6 +188,7 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 | 2026-10-29 | api-gastos, bot-telegram, servicio-ia | 5 / 0 |
 | 2026-11-07 | api-gastos, bot-telegram, servicio-ia | 3 / 0 |
 | 2026-11-12 | api-gastos, front-web, servicio-ia | 16 / 3 |
+| 2026-11-14 | api-gastos, bot-telegram, front-web | 6 / 2 |
 
 ## 7. Anexo: dónde mirar
 
