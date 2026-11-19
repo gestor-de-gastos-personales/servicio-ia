@@ -3,7 +3,7 @@
 
 > Documento **generado automáticamente** por la cátedra de Programación III (RepoSense + análisis de calidad + constancia). **No editar a mano**: se regenera en cada evaluación.
 > Rama evaluada: `main`. Análisis **heurístico** (regex + métricas): es una criba para orientar la revisión, **no una nota**.
-> Generado: 2026-11-18.
+> Generado: 2026-11-19.
 
 ## 1. Veredicto
 
@@ -28,7 +28,7 @@
 
 | Autor | Commits | Código (LOC) | Tests (LOC) | Docs (LOC) | Días activos | % del código |
 |---|---:|---:|---:|---:|---:|---:|
-| blevatino | 21 | 1,660 | 1,507 | 25 | 10 | 100% |
+| blevatino | 22 | 1,660 | 1,507 | 25 | 12 | 100% |
 
 > _El LOC de autoría lo calcula RepoSense sobre el historial y puede diferir del LOC de código del análisis de calidad (que mira solo el estado de `main`)._
 
@@ -38,7 +38,7 @@
 
 | Alumno | Sesiones | Cumplimiento | Pausa | Recencia | IC | Nivel | Para subir de nivel |
 |---|--:|--:|--:|--:|--:|--|--|
-| blevatino | 21 | 76% | 19 d | 93% | **62** | Aprueba | Cumplimiento 76% (mín. 100%); Pausa 19 d (máx. 5 d) |
+| blevatino | 22 | 79% | 19 d | 93% | **64** | Aprueba | Cumplimiento 79% (mín. 100%); Pausa 19 d (máx. 5 d) |
 
 > Para aprobar el IC: **2 sesiones por semana** sostenidas, sin pausas mayores a **10 días** y con actividad en las **últimas 2 semanas**. Se excluyen merges, bots y al docente. Zona horaria UTC-3.
 
@@ -146,7 +146,7 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 
 ### blevatino
 
-**16/28 clases con actividad** · total del período: 57 commits · 32 merges
+**17/28 clases con actividad** · total del período: 59 commits · 37 merges
 
 | Fecha | Actividad | Repositorios | Commits / merges |
 |---|:--:|---|--:|
@@ -177,9 +177,9 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 | 2026-11-06 | No | sin actividad | 0 / 0 |
 | 2026-11-11 | **Sí** | api-gastos, bot-telegram, front-web, servicio-ia | 23 / 7 |
 | 2026-11-13 | **Sí** | api-gastos, bot-telegram, front-web, servicio-ia | 0 / 9 |
-| 2026-11-18 | No | sin actividad | 0 / 0 |
+| 2026-11-18 | **Sí** | api-gastos, bot-telegram, front-web, servicio-ia | 2 / 5 |
 
-**Fuera de clase:** 9 fecha(s) con actividad · 88 commits · 18 merges
+**Fuera de clase:** 9 fecha(s) con actividad · 88 commits · 14 merges
 
 | Fecha | Repositorios | Commits / merges |
 |---|---|--:|
@@ -191,7 +191,7 @@ _Cumple **todos** los criterios del semáforo: no hay nada que arreglar para apr
 | 2026-11-12 | api-gastos, front-web, servicio-ia | 16 / 3 |
 | 2026-11-14 | api-gastos, bot-telegram, front-web | 6 / 2 |
 | 2026-11-16 | api-gastos | 1 / 0 |
-| 2026-11-17 | api-gastos, bot-telegram, front-web, servicio-ia | 7 / 6 |
+| 2026-11-17 | api-gastos, bot-telegram, front-web, servicio-ia | 7 / 2 |
 
 ## 7. Anexo: archivos donde se originan los problemas
 
